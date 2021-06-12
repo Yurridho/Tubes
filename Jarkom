@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+from mininet.net import Mininet
+from mininet.cli import CLI
+from mininet.link import Link, TCLink, Intf
+from subprocess import Popen, PIPE
+from mininet.log import setLogLevel
+
+if __'main'__ == __name__:
+    setLogLevel('info')
+    net = Mininet(link=TCLink)
+    key = "net.mptcp.mptcp_enabled"
+    value = 0
+    p = Popen("sysctl -w %s=%s" % (key, value), shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()
+    print ("stdout=",stdout,"stderr=", stderr)
+
+    h1 = net.addHost('h1')
+    h2 = net.addHost('h2')
+    r1 = net.addHost('r1')
+    r2 = net.addHost('r2')
+    r3 = net.addHost('r3')
+    r4 = net.addHost('r4')
+
+    bwlink={'bw':1}
+    bwlink2={'bw':0.5}
+
+    net.addLink(r1,h1,cls=TCLink, bwlink) #r1-eth0 h1-eth0
+    net.addLink(r1,r2,cls=TCLink, bwlink2) #r1-eth1 r2-eth0
+    net.addLink(r1,r4,cls=TCLink, bwlink) #r1-eth2 r2-eth0
+
+    net.addLink(r3,h1,cls=TCLink, bwlink) #r3-eth0 h1-eth1
+    net.addLink(r3,r4,cls=TCLink, bwlink2) #r3-eth1 r2-eth0(note)
+    net.addLink(r3,r2,cls=TCLink, bwlink) #r3-eth2 r2-eth1
+
+    net.addLink(r2,h2,cls=TCLink, bwlink) #r2-eth2 h2-eth0
+    net.addLink(r4,h2,cls=TCLink, bwlink) #r4-eth2 h2-eth1
+
+    net.build()
+
+    h1.cmd("ifconfig h1-eth0 0")
+    h1.cmd("ifconfig h1-eth1 0")
+
+    h2.cmd("ifconfig h2-eth0 0")
+    h2.cmd("ifconfig h2-eth1 0")
+
+    r1.cmd("ifconfig r1-eth0 0")
+    r1.cmd("ifconfig r1-eth1 0")
+    r1.cmd("ifconfig r1-eth2 0")
+
+    r2.cmd("ifconfig r2-eth0 0")
+    r2.cmd("ifconfig r2-eth1 0")
+    r2.cmd("ifconfig r2-eth2 0")
+
+    r3.cmd("ifconfig r3-eth0 0")
+    r3.cmd("ifconfig r3-eth1 0")
+    r3.cmd("ifconfig r3-eth2 0")
+
+    r4.cmd("ifconfig r4-eth0 0")
+    r4.cmd("ifconfig r4-eth1 0")
+    r4.cmd("ifconfig r4-eth2 0")
